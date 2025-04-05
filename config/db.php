@@ -1,8 +1,7 @@
-
 <?php
 function loadEnv($filePath) {
     if (!file_exists($filePath)) {
-        die("Error: .env file not found.");
+        die("Error: .env file not found at $filePath");
     }
 
     $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -13,9 +12,8 @@ function loadEnv($filePath) {
     }
 }
 
-// Load the .env file
-loadEnv(__DIR__ . '/../.env'); // Moves two levels up
-
+// Load the .env file from the root directory
+loadEnv(__DIR__ . '/../.env'); // __DIR__ is /travel_buddy/config, so ../ goes to /travel_buddy
 
 $dsn = "mysql:host=" . getenv('DB_HOST') . ";dbname=" . getenv('DB_NAME');
 $dbusername = getenv('DB_USER');
