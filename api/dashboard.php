@@ -42,7 +42,9 @@ function fetchJoinableTrips($user_id) {
             )
         ");
         $stmt->execute([':user_id' => $user_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $joinable_trips = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        error_log("fetchJoinableTrips for user $user_id returned: " . print_r($joinable_trips, true));
+        return $joinable_trips;
     } catch (PDOException $e) {
         error_log("Database error in fetchJoinableTrips: " . $e->getMessage());
         return ['error' => 'Failed to fetch joinable trips'];
@@ -71,11 +73,11 @@ function fetchJoinedTrips($user_id) {
     global $pdo;
     try {
         $stmt = $pdo->prepare("
-            SELECT st.*, 'solo' as trip_type, u.name AS creator_name, u.email AS creator_email
+            SELECT st.*, tm.status, 'solo' as trip_type, u.name AS creator_name, u.email AS creator_email
             FROM solo_trips st
             JOIN trip_members tm ON st.id = tm.trip_id
             LEFT JOIN users u ON st.created_by = u.id
-            WHERE tm.user_id = :user_id AND tm.status = 'approved'
+            WHERE tm.user_id = :user_id AND tm.status IN ('pending', 'approved')
         ");
         $stmt->execute([':user_id' => $user_id]);
         $trips = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -98,7 +100,7 @@ function fetchTripMembers($trip_id) {
             SELECT u.id, u.name, u.email
             FROM trip_members tm
             JOIN users u ON tm.user_id = u.id
-            WHERE tm.trip_id = :trip_id AND tm.status = 'approved'
+            WHERE tm.trip_id = :trip_id AND tm.status IN ('pending', 'approved') -- Include pending members
             UNION
             SELECT id, name, email FROM users WHERE id = (SELECT created_by FROM solo_trips WHERE id = :trip_id)
         ");

@@ -12,7 +12,7 @@ $user_id = $_SESSION['user']['id'];
 $all_trips = fetchUserTrips($user_id); // Trips created by the user
 $joinable_trips = fetchJoinableTrips($user_id);
 $pending_requests = fetchPendingJoinRequests($user_id);
-$joined_trips = fetchJoinedTrips($user_id); // Trips the user has joined
+$joined_trips = fetchJoinedTrips($user_id); // Trips the user has joined (including pending)
 
 if (isset($all_trips['error'])) {
     $error_message = $all_trips['error'];
@@ -46,12 +46,12 @@ include '../includes/navbar.php';
         <h2>Welcome to Your Dashboard</h2>
 
         <!-- Display success message -->
-        <?php if (isset($success_message) && $success_message): ?>
-            <p class="success-message" id="successMessage"><?php echo htmlspecialchars($success_message); ?></p>
+        <?php if (isset($_GET['success'])): ?>
+            <p class="success-message" id="successMessage"><?php echo htmlspecialchars("Request " . $_GET['success'] . " successfully!"); ?></p>
         <?php endif; ?>
 
         <!-- Display error message -->
-        <?php if (isset($error_message) && $error_message): ?>
+        <?php if ($error_message): ?>
             <p class="error-message"><?php echo htmlspecialchars($error_message); ?></p>
         <?php elseif (isset($_GET['error'])): ?>
             <p class="error-message">
@@ -63,7 +63,8 @@ include '../includes/navbar.php';
                     'join_failed' => 'Failed to join the trip. Please try again.',
                     'invalid_trip' => 'Invalid trip ID.',
                     'unauthorized_action' => 'You are not authorized to perform this action.',
-                    'update_failed' => 'Failed to update the request. Please try again.'
+                    'update_failed' => 'Failed to update the request. Please try again.',
+                    'solo_trip_limit_exceeded' => 'Cannot approve more than one member for a solo trip.'
                 ];
                 echo htmlspecialchars($error_messages[$error] ?? 'An unknown error occurred.');
                 ?>
@@ -73,7 +74,7 @@ include '../includes/navbar.php';
         <!-- Navigation links -->
         <div class="links">
             <a href="create_trip.php">Create a Trip</a>
-            <a href="/api/logout.php">Logout</a>
+            <a href="../../api/logout.php">Logout</a>
         </div>
 
         <!-- Your Trips Section -->
@@ -119,7 +120,7 @@ include '../includes/navbar.php';
             <p>No trips found. Start by creating a new trip!</p>
         <?php endif; ?>
 
-        <!-- Joined Trips Section (for users who joined) -->
+        <!-- Joined Trips Section -->
         <h3>Your Joined Trips</h3>
         <?php if (count($joined_trips) > 0): ?>
             <table id="joinedTripsTable">
@@ -133,6 +134,7 @@ include '../includes/navbar.php';
                         <th data-sort="created_at">Created At</th>
                         <th>Creator</th>
                         <th>Members</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,18 +150,23 @@ include '../includes/navbar.php';
                                 <span class="creator-tag">Creator: <?php echo htmlspecialchars($trip['creator_name']) . ' (' . htmlspecialchars($trip['creator_email']) . ')'; ?></span>
                             </td>
                             <td>
-                                <?php foreach ($trip['members'] as $member): ?>
+                                <?php 
+                                $members = $trip['members'] ?? [];
+                                foreach ($members as $member): ?>
                                     <div>
-                                        <?php echo htmlspecialchars($member['name']) . ' (' . htmlspecialchars($member['email']) . ')'; ?>
+                                        <?php echo htmlspecialchars($member['name'] ?? 'Unknown') . ' (' . htmlspecialchars($member['email'] ?? 'Unknown') . ')'; ?>
                                     </div>
-                                <?php endforeach; ?>
+                                <?php endforeach; 
+                                if (empty($members)) echo '<div>No members yet</div>';
+                                ?>
                             </td>
+                            <td><?php echo htmlspecialchars($trip['status'] ?? 'Unknown'); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         <?php else: ?>
-            <p>No trips joined yet.</p>
+            <p>No trips joined yet (pending or approved).</p>
         <?php endif; ?>
 
         <!-- Joinable Solo Trips Section -->

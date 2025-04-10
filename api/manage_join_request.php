@@ -61,6 +61,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['request_id']) && isset(
             $update_stmt->execute([':request_id' => $request_id]);
             error_log("Request $request_id approved successfully");
 
+            // Check for solo trip limit (only one approved member besides creator)
+            $member_count_stmt = $pdo->prepare("
+                SELECT COUNT(*) as count
+                FROM trip_members tm
+                JOIN solo_trips st ON tm.trip_id = st.id
+                WHERE tm.trip_id = :trip_id AND tm.status = 'approved' AND tm.user_id != st.created_by
+            ");
+            $member_count_stmt->execute([':trip_id' => $trip_id]);
+            $member_count = $member_count_stmt->fetchColumn();
+            if ($member_count > 1) {
+                $update_stmt->execute([':request_id' => $request_id]); // Revert to pending if limit exceeded
+                error_log("Solo trip limit exceeded for trip_id: $trip_id, reverting approval");
+                $pdo->rollBack();
+                header("Location: ../public/pages/dashboard.php?error=solo_trip_limit_exceeded");
+                exit;
+            }
+
             // Reject all other pending requests for the same trip
             $reject_stmt = $pdo->prepare("
                 UPDATE trip_members 
