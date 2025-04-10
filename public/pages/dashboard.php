@@ -218,8 +218,8 @@ include '../includes/navbar.php';
                             <td><?php echo htmlspecialchars($request['name']); ?></td>
                             <td><?php echo htmlspecialchars($request['joined_at']); ?></td>
                             <td>
-                                <a href="/api/manage_join_request.php?request_id=<?php echo $request['request_id']; ?>&action=approve" class="join-btn">Approve</a>
-                                <a href="/api/manage_join_request.php?request_id=<?php echo $request['request_id']; ?>&action=reject" class="join-btn" style="background-color: #ff4444;">Reject</a>
+                                <a href="../../api/manage_join_request.php?request_id=<?php echo $request['request_id']; ?>&action=approve" class="join-btn">Approve</a>
+                                <a href="../../api/manage_join_request.php?request_id=<?php echo $request['request_id']; ?>&action=reject" class="join-btn" style="background-color: #ff4444;">Reject</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
