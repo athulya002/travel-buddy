@@ -86,7 +86,7 @@ h2 {
 .error-message {
     text-align: center;
     padding: 12px 18px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border-radius: 8px;
     font-size: 15px;
     width: fit-content;
